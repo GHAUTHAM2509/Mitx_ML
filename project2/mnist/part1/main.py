@@ -9,6 +9,7 @@ from softmax import *
 from features import *
 from kernel import *
 from sklearn.svm import SVC
+from sklearn.preprocessing import  PolynomialFeatures
 
 #######################################################################
 # 1. Introduction
@@ -206,6 +207,8 @@ test_pca10 = project_onto_PC(test_x, pcs, n_components,feature_means)
 #
 train_cube = cubic_features(train_pca10)
 test_cube = cubic_features(test_pca10)
+
+
 ## train_cube (and test_cube) is a representation of our training (and test) data
 ## after applying the cubic kernel feature mapping to the 10-dimensional PCA representations.
 #
@@ -216,8 +219,11 @@ test_cube = cubic_features(test_pca10)
 # plot_cost_function_over_time(cost_function_history)
 # test_error = compute_test_error(test_cube, test_y, theta, temp_parameter=1)
 # print("Test error with 10-dim PCA with cubic features:", test_error)
-clt = SVC(kernel='poly', degree=3, random_state=0)
+clt = SVC(kernel='rbf', degree=3, random_state=0)
+print(1)
 clt.fit(train_cube, train_y)
+print(2)
 pred = clt.predict(test_cube)
+print(3)
 error = np.mean(pred == test_y)
 print(error)
