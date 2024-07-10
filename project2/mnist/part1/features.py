@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import uuid
 
 
 def project_onto_PC(X, pcs, n_components, feature_means):
@@ -9,6 +10,8 @@ def project_onto_PC(X, pcs, n_components, feature_means):
     has been projected onto the first n_components principcal components.
     """
     # TODO: first center data using the feature_means
+    X_centered = X - feature_means
+
     # TODO: Return the projection of the centered dataset
     #       on the first n_components principal components.
     #       This should be an array with dimensions: n x n_components.
@@ -16,6 +19,7 @@ def project_onto_PC(X, pcs, n_components, feature_means):
     #       of the eigenvectors returned by principal_components().
     #       Note that each eigenvector is already be a unit-vector,
     #       so the projection may be done using matrix multiplication.
+    return np.dot(X_centered, pcs[:,:n_components])
     raise NotImplementedError
 
 
@@ -142,6 +146,10 @@ def plot_PC(X, pcs, labels, feature_means):
     ax.set_xlabel('PC 1')
     ax.set_ylabel('PC 2')
     plt.show()
+    file_name = f"plot_{uuid.uuid4().hex}.png"
+
+# Save the plot to the file with the unique name
+    plt.savefig(file_name, dpi=300)
 
 
 ###Correction note:  Differing from the release, this function takes an extra input feature_means.
