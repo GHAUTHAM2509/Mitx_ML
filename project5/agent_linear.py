@@ -11,11 +11,11 @@ DEBUG = False
 GAMMA = 0.5  # discounted factor
 TRAINING_EP = 0.5  # epsilon-greedy parameter for training
 TESTING_EP = 0.05  # epsilon-greedy parameter for testing
-NUM_RUNS = 10
+NUM_RUNS = 5
 NUM_EPOCHS = 600
 NUM_EPIS_TRAIN = 25  # number of episodes for training at each epoch
 NUM_EPIS_TEST = 50  # number of episodes for testing
-ALPHA = 0.001  # learning rate for training
+ALPHA = 0.01  # learning rate for training
 
 ACTIONS = framework.get_actions()
 OBJECTS = framework.get_objects()
@@ -78,6 +78,16 @@ def linear_q_learning(theta, current_state_vector, action_index, object_index,
     """
 
     # TODO Your code here
+    q_values_next = theta @ next_state_vector
+    maxq_next = np.max(q_values_next)
+
+    q_values = theta @ current_state_vector
+    cur_index = tuple2index(action_index, object_index)
+    q_value_cur = q_values[cur_index]
+
+    target = reward + GAMMA * maxq_next * (1 - terminal)
+
+    theta[cur_index] = theta[cur_index] + ALPHA * (target - q_value_cur) * current_state_vector
     
 
 
@@ -90,38 +100,47 @@ def run_episode(for_training):
         for_training (bool): True if for training
 
     Returns:
-        None
+        None or cumulative reward
     """
     epsilon = TRAINING_EP if for_training else TESTING_EP
-    epi_reward = None
+    epi_reward = 0 if not for_training else None  # Initialize cumulative reward
 
     # initialize for each episode
-    # TODO Your code here
-
     (current_room_desc, current_quest_desc, terminal) = framework.newGame()
+
     while not terminal:
-        # Choose next action and execute
+        # Create the current state
         current_state = current_room_desc + current_quest_desc
         current_state_vector = utils.extract_bow_feature_vector(
             current_state, dictionary)
-        # TODO Your code here
+
+        # Select action using epsilon-greedy policy
+        action_index, object_index = epsilon_greedy(current_state_vector, theta, epsilon)
+
+        # Perform the action and observe the reward and next state
+        (next_room_desc, next_quest_desc, reward, terminal) = framework.step_game(
+            current_room_desc, current_quest_desc, action_index, object_index)
+        
+        next_state = next_room_desc + next_quest_desc
+        next_state_vector = utils.extract_bow_feature_vector(
+            next_state, dictionary)
 
         if for_training:
-            # update Q-function.
-            # TODO Your code here
-            pass
+            # Update Q-function using linear Q-learning
+            linear_q_learning(theta, current_state_vector, action_index, object_index,
+                              reward, next_state_vector, terminal)
 
         if not for_training:
-            # update reward
-            # TODO Your code here
-            pass
+            # Accumulate discounted reward
+            epi_reward += (GAMMA ** (NUM_EPIS_TEST - 1)) * reward  # Discounted sum of rewards
 
-        # prepare next step
-        # TODO Your code here
+        # Move to the next state
+        current_room_desc = next_room_desc
+        current_quest_desc = next_quest_desc
 
     if not for_training:
         return epi_reward
-
+    
 
 def run_epoch():
     """Runs one epoch and returns reward averaged over test episodes"""
@@ -176,4 +195,4 @@ if __name__ == '__main__':
     axis.set_ylabel('reward')
     axis.set_title(('Linear: nRuns=%d, Epilon=%.2f, Epi=%d, alpha=%.4f' %
                     (NUM_RUNS, TRAINING_EP, NUM_EPIS_TRAIN, ALPHA)))
-
+    plt.show()
